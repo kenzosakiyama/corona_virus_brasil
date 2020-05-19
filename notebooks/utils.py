@@ -4,6 +4,7 @@ from nltk.corpus import stopwords
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import re
+import os
 
 # ##### #
 # Regex #
@@ -32,6 +33,7 @@ re_changehyphen = re.compile(u'–')
 re_doublequotes_1 = re.compile(r'(\"\")')
 re_doublequotes_2 = re.compile(r'(\'\')')
 re_trim = re.compile(r' +', re.UNICODE)
+re_remove_pic = re.compile(r"pic.twitter.com\S+")
 
 def clean_text(text: str):
     """Apply all regex above to a given string."""
@@ -57,6 +59,7 @@ def clean_text(text: str):
     text = re_doublequotes_1.sub('\"', text)
     text = re_doublequotes_2.sub('\'', text)
     text = re_trim.sub(' ', text)
+    text = re_remove_pic.sub("", text)
     return text.strip()
 
 def get_hashtags(df: pd.DataFrame) -> List[str]:
@@ -72,15 +75,64 @@ def get_hashtags(df: pd.DataFrame) -> List[str]:
     
     return all_hashtags
 
-def build_wordcloud(text_list: List[str], output_file: str = "wordcloud.png") -> None:
+def build_wordcloud(text_list: List[str], output_file: str = "wordcloud.png", save_file: bool = False) -> None:
     "Função encarregada de gerar WordClouds"
     # Limpeza dos tweets
     text_list = [clean_text(text) for text in text_list]
-
     stop_words = stopwords.words("portuguese")
     wc = WordCloud(colormap='binary', max_words=200, stopwords=stop_words, background_color='white', width=1600, height=800)
     cloud = wc.generate(' '.join(text_list))
     plt.imshow(cloud, interpolation='bilinear')
     plt.axis("off")
-    wc.to_file(output_file)
+    # plt.close()
+
+    if save_file: wc.to_file(output_file)
+
+def get_tweets_from_folder(path: str) -> pd.DataFrame:
+
+    tweet_df = pd.DataFrame()
+
+    for day in os.listdir(path):
+        current_df = pd.read_csv(os.path.join(path, day))
+        tweet_df = tweet_df.append(current_df, ignore_index=True)
+    
+    return tweet_df
+
+def get_tweets_by_day(df: pd.DataFrame, normalize: bool = False) -> pd.DataFrame:
+
+    tweets_by_day_df = pd.DataFrame(columns=["data", "positivos", "neutros", "negativos", "hashtags"])
+
+    for day in df["date"].unique():
+        day_df = {}
+        current_day_df = df[df["date"] == day]
+        day_df["data"] = day
+        day_df["positivos"] = (current_day_df["sentiment"] == "Positivo").sum()
+        day_df["neutros"] = (current_day_df["sentiment"] == "Neutro").sum()
+        day_df["negativos"] = (current_day_df["sentiment"] == "Negativo").sum()
+        day_df["total"] = len(current_day_df)
+        day_df["hashtags"] = get_hashtags(current_day_df)
+        print()
+
+        tweets_by_day_df = tweets_by_day_df.append(day_df, ignore_index=True)
+    
+    if normalize:
+        tweets_by_day_df["positivos"] /= tweets_by_day_df["total"]
+        tweets_by_day_df["neutros"] /= tweets_by_day_df["total"]
+        tweets_by_day_df["negativos"] /= tweets_by_day_df["total"]
+
+    return tweets_by_day_df
+
+def contabilize_hashtags(hashtags: List[str]) -> pd.DataFrame:
+
+    hashtags_df = pd.DataFrame(hashtags, columns=["hashtag"])
+    hashtag_count = {}
+
+    for hashtag in hashtags_df["hashtag"].unique().tolist():
+        hashtag_count[hashtag] = (hashtags_df["hashtag"] == hashtag).sum()
+    
+    unique_hashtags_df = pd.DataFrame(hashtag_count.values(), index=hashtag_count.keys(), columns=["quantidade"])
+    unique_hashtags_df.sort_values("quantidade", ascending=False, inplace=True)
+
+    return unique_hashtags_df
+
 
