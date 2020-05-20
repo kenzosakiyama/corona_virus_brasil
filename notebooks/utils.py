@@ -111,7 +111,6 @@ def get_tweets_by_day(df: pd.DataFrame, normalize: bool = False) -> pd.DataFrame
         day_df["negativos"] = (current_day_df["sentiment"] == "Negativo").sum()
         day_df["total"] = len(current_day_df)
         day_df["hashtags"] = get_hashtags(current_day_df)
-        print()
 
         tweets_by_day_df = tweets_by_day_df.append(day_df, ignore_index=True)
     
