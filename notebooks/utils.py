@@ -34,6 +34,8 @@ re_doublequotes_1 = re.compile(r'(\"\")')
 re_doublequotes_2 = re.compile(r'(\'\')')
 re_trim = re.compile(r' +', re.UNICODE)
 re_remove_pic = re.compile(r"pic.twitter.com\S+")
+# Remover queries de pesquisa para não poluir as imagens geradas
+re_tweet_query = re.compile(r'(#?quarentena|#?isolamento|nessa)')
 
 def clean_text(text: str):
     """Apply all regex above to a given string."""
@@ -60,6 +62,7 @@ def clean_text(text: str):
     text = re_doublequotes_2.sub('\'', text)
     text = re_trim.sub(' ', text)
     text = re_remove_pic.sub("", text)
+    text = re_tweet_query.sub("", text)
     return text.strip()
 
 def get_hashtags(df: pd.DataFrame) -> List[str]:
