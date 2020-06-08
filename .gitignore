@@ -1,9 +1,6 @@
 dados
 .vscode
 __pycache__
+notebooks/__pycache__/
 *.png
-<<<<<<< HEAD
 *.json
-=======
-.json
->>>>>>> regioes_de_risco

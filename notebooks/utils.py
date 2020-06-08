@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import re
 import os
 
+IGNORE_HASHTAGS = ["#quarentena"]
+
 # ##### #
 # Regex #
 # ##### #
@@ -130,6 +132,7 @@ def contabilize_hashtags(hashtags: List[str]) -> pd.DataFrame:
     hashtag_count = {}
 
     for hashtag in hashtags_df["hashtag"].unique().tolist():
+        if hashtag in IGNORE_HASHTAGS: continue
         hashtag_count[hashtag] = (hashtags_df["hashtag"] == hashtag).sum()
     
     unique_hashtags_df = pd.DataFrame(hashtag_count.values(), index=hashtag_count.keys(), columns=["quantidade"])
