@@ -1,5 +1,7 @@
 import pandas as pd 
+import json
 from typing import List
+from tqdm import tqdm
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
@@ -140,4 +142,30 @@ def contabilize_hashtags(hashtags: List[str]) -> pd.DataFrame:
 
     return unique_hashtags_df
 
+def add_region(df: pd.DataFrame) -> pd.DataFrame:
+    estados2siglas = json.load(open("../dados/siglas_estados.json"))
+    siglas2estado = {estado: sigla for sigla, estado in estados2siglas.items()}
+    regioes = json.load(open("../dados/regioes_estados.json"))
 
+    sigla2regiao = {}
+    for sigla, estado in siglas2estado.items():
+        for region, states in regioes.items():
+            if estado in states:
+                sigla2regiao[sigla] = region
+                break
+    sigla2regiao["TOTAL"] = "TOTAL"
+
+    df["region"] = ""
+    for i in tqdm(range(len(df)), desc="- Mapeados"):
+        state = df["state"].iloc[i]
+        df["region"].iloc[i] = sigla2regiao[state]
+    
+    return df
+
+if __name__ == "__main__":
+
+    PATH = "../dados/brutos/casos_covid19_7maio2020.csv"
+    data_df = pd.read_csv(PATH)
+    data_df = add_region(data_df)
+    data_df.to_csv(PATH)
+    
