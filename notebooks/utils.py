@@ -156,7 +156,6 @@ def add_region(df: pd.DataFrame) -> pd.DataFrame:
     sigla2regiao["TOTAL"] = "TOTAL"
 
     df["region"] = ""
-    # pipoco
     # for i in range(len(df)):
     for i in tqdm(range(len(df)), desc="- Mapeados"):
         state = df["state"].iloc[i]
